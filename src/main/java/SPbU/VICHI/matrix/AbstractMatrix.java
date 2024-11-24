@@ -113,12 +113,12 @@ public class AbstractMatrix implements Matrix {
     }
 
     public AbstractMatrix multiply(double c) {
-        int rows = getColCount();
-        int cols = getRowCount();
-        AbstractMatrix result = new SquareMatrix(rows);
+        int cols = getColCount();
+        int rows = getRowCount();
+        AbstractMatrix result = new AbstractMatrix(getRowCount(), getColCount());
         for (int i = 0; i < rows; i++) {
             for (int j = 0; j < cols; j++) {
-                result.setElement(i, j, this.getElement(i, j) * c);
+                result.setElement(i,j, this.getElement(i,j) * c);
             }
         }
         return result;
