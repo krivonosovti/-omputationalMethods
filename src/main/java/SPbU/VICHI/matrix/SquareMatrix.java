@@ -53,6 +53,14 @@ public class SquareMatrix extends AbstractMatrix {
         return inverse;
     }
 
+    public static SquareMatrix identity(int n) {
+        SquareMatrix matrix = new SquareMatrix(n);
+        for (int i = 0; i < n; i++) {
+            matrix.setElement(i,i,1);
+        }
+        return  matrix;
+    }
+
     public double getCond() {
         return normMatrix(1) * (this.getInverse()).normMatrix(1);
     }

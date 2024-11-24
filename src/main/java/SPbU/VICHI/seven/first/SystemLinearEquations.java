@@ -21,15 +21,11 @@ public class SystemLinearEquations {
         FULL       // Полный выбор (по строке и столбцу)
     }
 
-    public static GaussResult solve(AbstractMatrix matrix, AbstractMatrix b, PivotType pivotType) {
+    public static AbstractMatrix forwardElimination(AbstractMatrix matrix, AbstractMatrix b, PivotType pivotType) {
         int n = matrix.getRowCount();
-        int operationCount = 0;
-        double determinant = 1;
-
         if (n != matrix.getColCount()) {
-            throw new IllegalArgumentException("Matrix must be square to solve the system.");
+            throw new IllegalArgumentException("Matrix must be square for forward elimination.");
         }
-
         if (b.getRowCount() != n || b.getColCount() != 1) {
             throw new IllegalArgumentException("Vector b must have dimensions Nx1.");
         }
@@ -43,7 +39,7 @@ public class SystemLinearEquations {
             augmented.setElement(i, n, b.getElement(i, 0));
         }
 
-        // Прямой ход метода Гаусса с выбором ведущего элемента
+        // Прямой ход метода Гаусса
         for (int i = 0; i < n; i++) {
             int pivotRow = i;
             int pivotCol = i;
@@ -78,19 +74,16 @@ public class SystemLinearEquations {
                     break;
             }
 
-            // Перестановка строк и/или столбцов для приведения ведущего элемента в позицию (i, i)
+            // Перестановка строк и/или столбцов
             if (pivotRow != i) {
-                determinant *= -1; // Инверсия знака определителя при перестановке строк
                 for (int j = 0; j <= n; j++) {
                     double temp = augmented.getElement(i, j);
                     augmented.setElement(i, j, augmented.getElement(pivotRow, j));
                     augmented.setElement(pivotRow, j, temp);
-                    operationCount++; // Операция перестановки
                 }
             }
 
             if (pivotType == PivotType.FULL && pivotCol != i) {
-                determinant *= -1; // Инверсия знака определителя при перестановке столбцов
                 for (int row = 0; row < n; row++) {
                     double temp = augmented.getElement(row, i);
                     augmented.setElement(row, i, augmented.getElement(row, pivotCol));
@@ -98,43 +91,48 @@ public class SystemLinearEquations {
                 }
             }
 
-//            /**
-//             * //            Это условие проверяет, не слишком ли мал ведущий элемент на текущем шаге алгоритма Гаусса.
-//             * //            Пороговое значение 1e-10 используется, чтобы учесть возможные ошибки округления при
-//             * //            вычислениях с плавающей точкой.
-//            */
-//            if (Math.abs(augmented.getElement(i, i)) < 1e-10) {
-//                throw new ArithmeticException("System of equations has no unique solution.");
-//            }
-
-
-            determinant *= augmented.getElement(i, i); // Умножение на диагональный элемент
-
+            // Нормализация строки
             double diagElement = augmented.getElement(i, i);
             for (int j = 0; j <= n; j++) {
                 augmented.setElement(i, j, augmented.getElement(i, j) / diagElement);
-                operationCount++;
             }
 
+            // Обнуление элементов ниже ведущего
             for (int k = i + 1; k < n; k++) {
                 double factor = augmented.getElement(k, i);
                 for (int j = 0; j <= n; j++) {
                     augmented.setElement(k, j, augmented.getElement(k, j) - factor * augmented.getElement(i, j));
-                    operationCount++;
                 }
             }
         }
 
+        return augmented;
+    }
+
+    public static Vector backSubstitution(AbstractMatrix augmented) {
+        int n = augmented.getRowCount();
         Vector solution = new Vector(n);
+
         for (int i = n - 1; i >= 0; i--) {
             double sum = augmented.getElement(i, n);
             for (int j = i + 1; j < n; j++) {
                 sum -= augmented.getElement(i, j) * solution.getElement(j, 0);
-                operationCount++;
             }
             solution.setElement(i, 0, sum);
         }
 
-        return new GaussResult(solution, operationCount, determinant);
+        return solution;
+    }
+
+    public static GaussResult solve(AbstractMatrix matrix, AbstractMatrix b, PivotType pivotType) {
+        AbstractMatrix augmented = forwardElimination(matrix, b, pivotType);
+        Vector solution = backSubstitution(augmented);
+
+        double determinant = 1;
+        for (int i = 0; i < matrix.getRowCount(); i++) {
+            determinant *= augmented.getElement(i, i);
+        }
+
+        return new GaussResult(solution, 0, determinant); // Replace 0 with operation count if needed
     }
 }

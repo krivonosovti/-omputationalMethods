@@ -1,6 +1,6 @@
 package SPbU.VICHI.matrix;
 
-public class AbstractMatrix implements Matrix {
+public class AbstractMatrix implements Matrix, Cloneable {
 
     protected double[][] elements;
 
@@ -82,6 +82,21 @@ public class AbstractMatrix implements Matrix {
         return false;
     }
 
+
+    @Override
+    public AbstractMatrix clone() {
+        try {
+            AbstractMatrix cloned = (AbstractMatrix) super.clone();
+            // Создаем глубокую копию массива элементов
+            cloned.elements = new double[this.getRowCount()][this.getColCount()];
+            for (int i = 0; i < this.getRowCount(); i++) {
+                System.arraycopy(this.elements[i], 0, cloned.elements[i], 0, this.getColCount());
+            }
+            return cloned;
+        } catch (CloneNotSupportedException e) {
+            throw new AssertionError("Cloning not supported", e);
+        }
+    }
     public AbstractMatrix transpose() {
         int rows = getColCount(); // Новое количество строк после транспонирования
         int cols = getRowCount(); // Новое количество колонок после транспонирования
@@ -260,4 +275,31 @@ public class AbstractMatrix implements Matrix {
             throw new ArithmeticException("Matrix cannot be inverted.");
         }
     }
+
+    public void swapRows(int row1, int row2) {
+        if (row1 < 0 || row1 >= getRowCount() || row2 < 0 || row2 >= getRowCount()) {
+            throw new IndexOutOfBoundsException("Row index out of bounds");
+        }
+        if (row1 != row2) {
+            for (int col = 0; col < getColCount(); col++) {
+                double temp = getElement(row1, col);
+                setElement(row1, col, getElement(row2, col));
+                setElement(row2, col, temp);
+            }
+        }
+    }
+
+    public void swapCols(int col1, int col2) {
+        if (col1 < 0 || col1 >= getColCount() || col2 < 0 || col2 >= getColCount()) {
+            throw new IndexOutOfBoundsException("Column index out of bounds");
+        }
+        if (col1 != col2) {
+            for (int row = 0; row < getRowCount(); row++) {
+                double temp = getElement(row, col1);
+                setElement(row, col1, getElement(row, col2));
+                setElement(row, col2, temp);
+            }
+        }
+    }
+
 }
